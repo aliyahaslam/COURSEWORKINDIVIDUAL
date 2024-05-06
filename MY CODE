@@ -1,0 +1,29 @@
+import streamlit as st 
+st.title("BIODIVERSITY INSIGHTS DASHBOARD") 
+st.subheader("Exploring the key insights found from our group project")
+import pandas as pd
+df = pd.read_excel("c:/Users/aliya/OneDrive/Desktop/Data Science Project Lifecycle Coursework/individual courseowrk/4Lenses.xlsx")
+st.write("This is the table that I will be using for my dashboard")
+st.write(df)
+st.subheader("NAVIGATION")
+#df.columns
+st.subheader("VERIFYING THE BIODIVERSITY SCORE")
+st.latex(r'''
+BS  = -187.3967 - 1.3534x1 + 10.9765x2 - 32.0721x3''')
+df["AGRICULTURAL LAND %"] = pd.to_numeric(df["AGRICULTURAL LAND %"], errors = 'coerce')
+df["FOREST AREA %"] = pd.to_numeric(df["FOREST AREA %"], errors = 'coerce')
+df["WHEAT YIELD"] = pd.to_numeric(df["WHEAT YIELD"], errors = 'coerce')
+def calculate_biodiversity_score(AGRICULTURAL_LAND_pct, FOREST_AREA_pct, WHEAT_YIELD): 
+    intercept = -187.3967
+    coefficient_x1 = -1.3534
+    coefficient_x2 = 10.9765
+    coefficient_x3 = -32.0721
+    biodiversity_score = intercept + coefficient_x1 * AGRICULTURAL_LAND_pct + coefficient_x2 * FOREST_AREA_pct + coefficient_x3 *WHEAT_YIELD
+    return biodiversity_score
+st.subheader("Biodiversity Score Calculator")
+st.write("Input Data: ")
+st.write(df)
+df["BIODIVERSITY SCORE"] = df.apply(lambda row: calculate_biodiversity_score(row["AGRICULTURAL LAND %"], row["FOREST AREA %"], row["WHEAT YIELD"]), axis=1 )
+st.write("Biodiversity Scores: ")
+st.write(df[["BIODIVERSITY SCORE"]])
+st.subheader("VISUALIZATIONS")
