@@ -1,7 +1,121 @@
+#import what i need
 import streamlit as st 
-st.title("Biodiversity Insights Dashboard")
-st.subheader("Exploring the key insights found from our group project")
-st.subheader("navigation ")
+import matplotlib.pyplot as plt
 import pandas as pd
+from streamlit_feedback import streamlit_feedback
+#titles of my dashboard
+st.title("BIODIVERSITY INSIGHTS DASHBOARD") 
+st.subheader("EXPLORING KEY INSIGHTS")
+st.write("In this interactive dashboard, you will see the insights that we have found in our group project in forms of visualizations.")
+st.write("I hope you enjoy! :)")
+#importing my excel document that I am using for this dashboard. 
 df = pd.read_excel("c:/Users/aliya/OneDrive/Desktop/Data Science Project Lifecycle Coursework/individual courseowrk/4Lenses.xlsx")
+#displaying the excel file. 
+st.write("Below shows the data table with our key insights of the 4 lenses!")
 st.write(df)
+#df.columns
+
+#this is the formula tht we found for the BS. I wanted to make sure that it works well hence this test case. 
+st.subheader("VERIFYING THE BIODIVERSITY SCORE")
+st.write("Below will show you the biodiversity formula we worked out : ")
+
+st.latex(r'''
+BS  = -187.3967 - 1.3534x1 + 10.9765x2 - 32.0721x3''')
+
+df["AGRICULTURAL LAND %"] = pd.to_numeric(df["AGRICULTURAL LAND %"], errors = 'coerce')
+df["FOREST AREA %"] = pd.to_numeric(df["FOREST AREA %"], errors = 'coerce')
+df["WHEAT YIELD"] = pd.to_numeric(df["WHEAT YIELD"], errors = 'coerce')
+#calculating the formula
+def calculate_biodiversity_score(AGRICULTURAL_LAND_pct, FOREST_AREA_pct, WHEAT_YIELD): 
+    intercept = -187.3967
+    coefficient_x1 = -1.3534
+    coefficient_x2 = 10.9765
+    coefficient_x3 = -32.0721
+    biodiversity_score = intercept + coefficient_x1 * AGRICULTURAL_LAND_pct + coefficient_x2 * FOREST_AREA_pct + coefficient_x3 *WHEAT_YIELD
+    return biodiversity_score
+#this will show the workings done. 
+st.subheader("Biodiversity Score Calculator")
+st.write("Here I have redone the scores below to verify if the formula works !!")
+
+df["BIODIVERSITY SCORE"] = df.apply(lambda row: calculate_biodiversity_score(row["AGRICULTURAL LAND %"], row["FOREST AREA %"], row["WHEAT YIELD"]), axis=1 )
+
+st.write("The Biodiversity Scores are as follows : ")
+st.write(df[["BIODIVERSITY SCORE"]])
+st.write("The formula is working as you can see due to the change in the amount after the decimal! ")
+
+#this lets you select a year and tells you the biodiversity score given from that year 
+st.subheader("Select a Year to view the Biodiversity Score",)
+
+year = st.selectbox('Select Year', df["YEAR"].unique())
+if year: 
+    filtered_data = df[df["YEAR"] == year]
+    if not filtered_data.empty:
+        biodiversity_score = filtered_data["BIODIVERSITY SCORE"].iloc[0]
+        st.write(f"The biodiversity for the year {year} is : {biodiversity_score}")
+    else:
+        st.write("No data available")
+
+#this adds a sidebar to the dashboard, This was written after so it doesnt mess with the int/str values made. 
+st.sidebar.header('Filter Data :')
+df['YEAR'] = pd.to_numeric(df['YEAR'], errors='coerce')
+try:
+    year = st.sidebar.slider('Year Range', min_value=int(df['YEAR'].min()), max_value=int(df['YEAR'].max()))
+except Exception as e:
+    st.error(f"An error occurred: {e}")  
+
+#this is a line chart of the datasets that we used for the biodiversity score. 
+st.subheader("Line graph of the datasets ")
+df = df.dropna(subset=['YEAR'])
+fig, ax = plt.subplots()
+df['YEAR'] = df["YEAR"].astype(str)
+ax.plot(df['YEAR'], df['AGRICULTURAL LAND %'], marker='o', linestyle= '-', label='Agricultural Land ')
+ax.plot(df['YEAR'], df['FOREST AREA %'], marker='o', linestyle= '-', label='Forest Area ')
+ax.plot(df['YEAR'], df['WHEAT YIELD'], marker='o', linestyle= '-', label='Wheat Yield ')
+ax.set_xlabel('YEAR')
+ax.set_ylabel('PERCENTAGE %')
+ax.set_title('THE TREND OF MY KEY DATASETS OVERTIME')
+ax.legend()
+plt.xticks(rotation=45)
+st.pyplot(fig)
+
+#this lets you leave an interpretation of the line chart. 
+interpretation = st.text_input("What does this line chart show? Please provide your interpretation. ")
+if interpretation:
+    st.write("Your interpretation:", interpretation)
+
+#another line chart for the 4 lenses (carbon, environment, society and health)
+st.subheader("Line graph of the 4 lenses")
+df['CARBON'] = pd.to_numeric(df['CARBON'], errors = 'coerce')
+df['ENVIRONMENT'] = pd.to_numeric(df['ENVIRONMENT'], errors = 'coerce')
+df['SOCIETY'] = pd.to_numeric(df['SOCIETY'], errors = 'coerce')
+df['HEALTH'] = pd.to_numeric(df['HEALTH'], errors = 'coerce')
+
+df = df.dropna(subset=['YEAR'])
+fig, ax = plt.subplots()
+df['YEAR'] = df["YEAR"].astype(str)
+ax.plot(df['YEAR'], df['CARBON'], marker='o', linestyle= '-', label='WHEAT CO2 IMPACT')
+ax.plot(df['YEAR'], df['ENVIRONMENT'], marker='o', linestyle= '-', label='RED LIST SCORE IMPACT')
+ax.plot(df['YEAR'], df['SOCIETY'], marker='o', linestyle= '-', label='FOOD IMPACT')
+ax.plot(df['YEAR'], df['HEALTH'], marker='o', linestyle= '-', label='PM2.5 IMPACT')
+
+ax.set_xlabel('YEAR')
+ax.set_ylabel('PERCENTAGE %')
+ax.set_title('THE TREND OF MY 4 LENSES OVERTIME')
+ax.legend()
+plt.xticks(rotation=45)
+st.pyplot(fig)
+#this will let you intepret the line chart again. 
+interpretation = st.text_input("What does this line chart show? Please provide your interpretation. ")
+if interpretation:
+    st.write("Your interpretation:", interpretation)
+
+#this is the code written to get feedback from the dashboard by the user that is using it. 
+with st.form("main", clear_on_submit=True):
+    st.write('Would you like to provide any feedback? ')
+   
+    feedback = streamlit_feedback(
+        feedback_type="thumbs",
+        optional_text_label="Any details to your answer? ",
+        align="flex-start"
+    )
+    st.form_submit_button('save')
